@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Robotics Learning Path — Unitree Go2-W</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0d12;
+    --surface: #111520;
+    --surface2: #181e2e;
+    --accent: #00e5ff;
+    --accent2: #ff6b35;
+    --accent3: #7c3aed;
+    --text: #e8edf5;
+    --muted: #5a6580;
+    --border: #1e2740;
+    --done: #00c87a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  header {
+    margin-bottom: 48px;
+  }
+
+  .eyebrow {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .eyebrow::before {
+    content: '';
+    display: inline-block;
+    width: 24px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  h1 {
+    font-size: clamp(32px, 6vw, 52px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+  }
+
+  h1 span {
+    color: var(--accent);
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 15px;
+    font-family: 'Space Mono', monospace;
+    line-height: 1.6;
+    max-width: 560px;
+  }
+
+  /* Progress bar */
+  .progress-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 40px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .progress-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+    min-width: 100px;
+  }
+
+  .progress-bar-bg {
+    flex: 1;
+    height: 6px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 99px;
+    transition: width 0.5s ease;
+    width: 0%;
+  }
+
+  .progress-count {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  /* Phase sections */
+  .phase {
+    margin-bottom: 32px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--surface);
+    transition: border-color 0.3s;
+  }
+
+  .phase.active {
+    border-color: rgba(0,229,255,0.3);
+    box-shadow: 0 0 30px rgba(0,229,255,0.05);
+  }
+
+  .phase-header {
+    display: flex;
+    align-items: center;
+    padding: 20px 24px;
+    cursor: pointer;
+    gap: 16px;
+    user-select: none;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.2s;
+  }
+
+  .phase-header:hover {
+    background: var(--surface2);
+  }
+
+  .phase-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    background: rgba(0,229,255,0.08);
+    border: 1px solid rgba(0,229,255,0.2);
+    border-radius: 6px;
+    padding: 4px 8px;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+  }
+
+  .phase-title {
+    flex: 1;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .phase-meta {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    text-align: right;
+  }
+
+  .phase-toggle {
+    color: var(--muted);
+    font-size: 18px;
+    transition: transform 0.3s;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .phase.open .phase-toggle {
+    transform: rotate(180deg);
+  }
+
+  .phase-body {
+    display: none;
+    padding: 0;
+  }
+
+  .phase.open .phase-body {
+    display: block;
+  }
+
+  /* Tasks */
+  .task {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .task:last-child {
+    border-bottom: none;
+  }
+
+  .task:hover {
+    background: var(--surface2);
+  }
+
+  .task.done {
+    opacity: 0.55;
+  }
+
+  .task-check {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border);
+    border-radius: 5px;
+    flex-shrink: 0;
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    background: transparent;
+  }
+
+  .task.done .task-check {
+    background: var(--done);
+    border-color: var(--done);
+  }
+
+  .task.done .task-check::after {
+    content: '✓';
+    color: #000;
+    font-size: 12px;
+    font-weight: bold;
+  }
+
+  .task-content {
+    flex: 1;
+  }
+
+  .task-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 3px;
+    transition: color 0.2s;
+  }
+
+  .task.done .task-title {
+    text-decoration: line-through;
+    color: var(--muted);
+  }
+
+  .task-desc {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .task-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 99px;
+    white-space: nowrap;
+    border: 1px solid;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .tag-hands-on { color: var(--accent2); border-color: rgba(255,107,53,0.3); background: rgba(255,107,53,0.08); }
+  .tag-theory { color: var(--accent); border-color: rgba(0,229,255,0.3); background: rgba(0,229,255,0.08); }
+  .tag-project { color: #a78bfa; border-color: rgba(167,139,250,0.3); background: rgba(167,139,250,0.08); }
+  .tag-leverage { color: #fbbf24; border-color: rgba(251,191,36,0.3); background: rgba(251,191,36,0.08); }
+
+  /* PM leverage callout */
+  .callout {
+    margin: 0 24px 20px;
+    padding: 16px 18px;
+    background: rgba(251,191,36,0.06);
+    border: 1px solid rgba(251,191,36,0.2);
+    border-radius: 10px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: #fbbf24;
+    line-height: 1.6;
+    margin-top: 20px;
+  }
+
+  .callout strong {
+    display: block;
+    margin-bottom: 4px;
+    letter-spacing: 0.05em;
+    font-size: 11px;
+    text-transform: uppercase;
+  }
+
+  /* Resources section */
+  .resources {
+    margin-top: 40px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--surface);
+    overflow: hidden;
+  }
+
+  .resources-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    font-size: 16px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .resources-header span {
+    color: var(--accent);
+  }
+
+  .resource-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1px;
+    background: var(--border);
+  }
+
+  .resource-item {
+    background: var(--surface);
+    padding: 18px 20px;
+    transition: background 0.2s;
+  }
+
+  .resource-item:hover {
+    background: var(--surface2);
+  }
+
+  .resource-name {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 5px;
+  }
+
+  .resource-desc {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .resource-type {
+    display: inline-block;
+    margin-top: 8px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--accent2);
+  }
+
+  /* Confetti burst on complete */
+  @keyframes pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+  }
+
+  .task.just-done .task-check {
+    animation: pop 0.3s ease;
+  }
+
+  /* Reference section */
+  .ref-section {
+    border-top: 1px solid var(--border);
+  }
+
+  .ref-toggle-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 24px;
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.2s;
+  }
+
+  .ref-toggle-btn:hover { background: var(--surface2); }
+
+  .ref-toggle-btn .ref-arrow {
+    margin-left: auto;
+    transition: transform 0.3s;
+    font-size: 10px;
+  }
+
+  .ref-toggle-btn.open .ref-arrow { transform: rotate(180deg); }
+
+  .ref-body {
+    display: none;
+    padding: 0 24px 24px;
+  }
+
+  .ref-body.open { display: block; }
+
+  .ref-h2 {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin: 24px 0 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .ref-h3 {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--text);
+    font-weight: 700;
+    margin: 16px 0 6px;
+  }
+
+  .ref-p {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 8px;
+  }
+
+  .ref-code {
+    color: var(--accent);
+    background: rgba(0,229,255,0.08);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+
+  .ref-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 8px 0 16px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+  }
+
+  .ref-table th {
+    text-align: left;
+    color: var(--accent);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .ref-table td {
+    padding: 7px 10px;
+    color: var(--muted);
+    border-bottom: 1px solid rgba(30,39,64,0.5);
+    vertical-align: top;
+    line-height: 1.5;
+  }
+
+  .ref-table td:first-child {
+    color: var(--text);
+    white-space: nowrap;
+  }
+
+  .ref-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 8px 0 16px;
+  }
+
+  .ref-chip {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+
+  .ref-chip.green { color: var(--done); border-color: rgba(0,200,122,0.25); background: rgba(0,200,122,0.07); }
+  .ref-chip.blue { color: var(--accent); border-color: rgba(0,229,255,0.25); background: rgba(0,229,255,0.07); }
+  .ref-chip.orange { color: var(--accent2); border-color: rgba(255,107,53,0.25); background: rgba(255,107,53,0.07); }
+
+  /* Phase complete badge */
+  .phase-complete {
+    display: none;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--done);
+    border: 1px solid var(--done);
+    border-radius: 99px;
+    padding: 3px 10px;
+    background: rgba(0,200,122,0.08);
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="eyebrow">Your personal roadmap</div>
+    <h1>Robotics Path<br><span>Unitree Go2-W</span></h1>
+    <p class="subtitle">Build-first learning with Claude Code. Every concept learned by shipping real code on your robot.</p>
+  </header>
+
+  <div class="progress-wrap">
+    <div class="progress-label">Overall progress</div>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progressFill"></div>
+    </div>
+    <div class="progress-count" id="progressCount">0 / 0 done</div>
+  </div>
+
+  <!-- PHASE 1 -->
+  <div class="phase open" id="phase1">
+    <div class="phase-header" onclick="togglePhase('phase1')">
+      <div class="phase-num">PHASE 01</div>
+      <div class="phase-title">First Contact — Robot Up & Running</div>
+      <div class="phase-meta">Weeks 1–2<br>~3 hrs/week</div>
+      <span class="phase-complete" id="complete-phase1">✓ Done</span>
+      <div class="phase-toggle">▼</div>
+    </div>
+    <div class="phase-body">
+      <div class="callout">
+        <strong>⚡ How to use Claude Code here</strong>
+        Open a project folder, run <code>claude</code>, and describe what you want in plain English. Say "I have a Unitree Go2-W and want to set up a Python project to connect to it via SDK — help me scaffold it." Claude Code will handle boilerplate and explain as it goes.
+      </div>
+
+      <div class="task" onclick="toggleTask(this)">
+        <div class="task-check"></div>
+        <div class="task-content">
+          <div class="task-title">Power on the Go2-W and walk it using the Unitree app</div>
+          <div class="task-desc">Your tactile "Hello World." Before writing a line of code, feel what the robot does — gait modes, turns, obstacle response. You'll understand your SDK goals better after this.</div>
+        </div>
+        <div class="task-tag tag-hands-on">Hands-on</div>
+      </div>
+
+      <div class="task" onclick="toggleTask(this)">
+        <div class="task-check"></div>
+        <div class="task-content">
+          <div class="task-title">Use Claude Code to scaffold a Go2 Python project from scratch</div>
+          <div class="task-desc">In your terminal: <code>mkdir go2-workspace && cd go2-workspace && claude</code>. Then tell Claude Code: "Set up a Python project to connect to a Unitree Go2-W using the unitree_sdk2_python library." It'll create the folder structure, requirements.txt, and a connection boilerplate.</div>
+        </div>
+        <div class="task-tag tag-hands-on">Hands-on</div>
+      </div>
+
+      <div class="task" onclick="toggleTask(this)">
+        <div class="task-check"></div>
+        <div class="task-content">
+          <div class="task-title">Ask Claude Code to explain every file it just created</div>
+          <div class="task-desc">Type: "Walk me through each file you created and explain what it does and why." This replaces a tutorial — you get explanations tailored to your exact code, not generic examples.</div>
+        </div>
+        <div class="task-tag tag-hands-on">Hands-on</div>
+      </div>
+
+      <div class="task" onclick="toggleTask(this)">
+        <div class="task-check"></div>
+        <div class="task-content">
+          <div class="task-title">Run the connection script and get a live data print from the robot</div>
+          <div class="task-desc">Connect the Go2-W via WiFi/ethernet and run the boilerplate. If it fails, paste the error into Claude Code and say "fix this." Iterate until you see robot data in your terminal.</div>
+        </div>
+        <div class="task-tag tag-project">Project</div>
+      </div>
+
+      <div class="task" onclick="toggleTask(this)">
+        <div class="task-check"></div>
+        <div class="task-content">
+          <div class="task-title">Ask Claude Code: "What can I control on the Go2 with this SDK?"</div>
+          <div class="task-desc">Let Claude Code read your installed SDK and generate a plain-English capabilities summary. This is your PM "feature inventory" — but built from real code, not docs skimming.</div>
+        </div>
+        <div class="task-tag tag-leverage">PM Leverage</div>
+      </div>
+
+      <!-- PHASE 01 REFERENCE DOCS -->
+      <div class="ref-section">
+        <button class="ref-toggle-btn" onclick="toggleRef(this)">
+          ◈ &nbsp; PHASE 01 REFERENCE DOCS
+          <span class="ref-arrow">▼</span>
+        </button>
+        <div class="ref-body">
+
+          <div class="ref-h2">Project Files — What Each One Does</div>
+
+          <div class="ref-h3">config/robot.env</div>
+          <div class="ref-p">Settings file. Two variables: which network port to use, and the robot's IP address. Change <code class="ref-code">ROBOT_NETWORK_INTERFACE</code> if you switch between ethernet and WiFi.</div>
+
+          <div class="ref-h3">requirements.txt</div>
+          <div class="ref-p">Shopping list for Python packages. Run <code class="ref-code">pip install -r requirements.txt</code> and Python fetches everything the project needs.</div>
+          <table class="ref-table">
+            <tr><th>Package</th><th>Why you need it</th></tr>
+            <tr><td>unitree_sdk2py</td><td>Unitree's SDK — subscribers, clients, message types</td></tr>
+            <tr><td>cyclonedds</td><td>DDS middleware the robot uses to communicate</td></tr>
+            <tr><td>numpy</td><td>Array math; SDK returns positions/velocities as arrays</td></tr>
+            <tr><td>python-dotenv</td><td>Reads robot.env into the environment</td></tr>
+            <tr><td>rich</td><td>Pretty terminal tables and colors</td></tr>
+          </table>
+
+          <div class="ref-h3">src/go2_connection.py</div>
+          <div class="ref-p">A module imported by every script. Call <code class="ref-code">init_channel()</code> once at startup before anything else. It reads the network config, writes a CycloneDDS XML config (workaround for a buffer overflow bug in the SDK), then starts the DDS communication layer.</div>
+
+          <div class="ref-h3">scripts/connect_test.py</div>
+          <div class="ref-p">Subscribes to <code class="ref-code">rt/lf/sportmodestate</code> and prints a live table of position, velocity, and gait data. Only updates when the robot is in sport mode — enable via the Unitree app.</div>
+
+          <div class="ref-h3">scripts/imu_live.py</div>
+          <div class="ref-p">Subscribes to <code class="ref-code">rt/lowstate</code> and prints accelerometer, gyroscope, and roll/pitch/yaw live. Also logs every reading to <code class="ref-code">logs/imu_&lt;timestamp&gt;.csv</code>. Works regardless of robot mode — always publishing.</div>
+
+          <div class="ref-h2">SDK Capabilities — What You Can Control</div>
+
+          <div class="ref-h3">Movement — SportClient</div>
+          <div class="ref-chips">
+            <span class="ref-chip green">Move(vx, vy, vyaw)</span>
+            <span class="ref-chip green">StopMove()</span>
+            <span class="ref-chip green">StandUp()</span>
+            <span class="ref-chip green">StandDown()</span>
+            <span class="ref-chip green">Sit()</span>
+            <span class="ref-chip green">RiseSit()</span>
+            <span class="ref-chip green">BalanceStand()</span>
+          </div>
+
+          <div class="ref-h3">Gaits</div>
+          <div class="ref-chips">
+            <span class="ref-chip blue">StaticWalk()</span>
+            <span class="ref-chip blue">TrotRun()</span>
+            <span class="ref-chip blue">FreeWalk()</span>
+            <span class="ref-chip blue">ClassicWalk()</span>
+            <span class="ref-chip blue">EconomicGait()</span>
+          </div>
+
+          <div class="ref-h3">Tricks & Dances</div>
+          <div class="ref-chips">
+            <span class="ref-chip orange">FrontFlip()</span>
+            <span class="ref-chip orange">BackFlip()</span>
+            <span class="ref-chip orange">FrontJump()</span>
+            <span class="ref-chip orange">HandStand()</span>
+            <span class="ref-chip orange">Dance1()</span>
+            <span class="ref-chip orange">Dance2()</span>
+            <span class="ref-chip orange">Hello()</span>
+            <span class="ref-chip orange">Stretch()</span>
+            <span class="ref-chip orange">Heart()</span>
+          </div>
+
+          <div class="ref-h3">Navigation — ObstaclesAvoidClient</div>
+          <div class="ref-chips">
+            <span class="ref-chip blue">Move to absolute position</span>
+            <span class="ref-chip blue">Move to incremental position</span>
+            <span class="ref-chip blue">Toggle obstacle avoidance on/off</span>
+          </div>
+
+          <div class="ref-h3">Other Clients</div>
+          <div class="ref-chips">
+            <span class="ref-chip">VuiClient — speaker volume, LED brightness</span>
+            <span class="ref-chip">VideoClient — camera frames at 720p / 360p / 180p</span>
+          </div>
+
+          <div class="ref-h2">SDK Capabilities — What You Can Read</div>
+          <table class="ref-table">
+            <tr><th>Topic</th><th>What's inside</th></tr>
+            <tr><td>rt/lowstate</td><td>IMU, all 20 joint angles/torques, foot forces, battery</td></tr>
+            <tr><td>rt/lf/sportmodestate</td><td>Position, velocity, gait type, obstacle ranges, foot positions</td></tr>
+            <tr><td>rt/lidarstate</td><td>Lidar health and point cloud metadata</td></tr>
+            <tr><td>rt/uwbstate</td><td>UWB positioning and heading</td></tr>
+            <tr><td>Battery (in lowstate)</td><td>Charge %, cell voltages, temperatures, cycle count</td></tr>
+            <tr><td>Motors (in lowstate)</td><td>Angle, velocity, torque, temperature per joint</td></tr>
+          </table>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- PHASE 2 -->
+  <div class="phase" id="phase2">
+    <div class="phase-header" onclick="togglePhase('phase2')">
+      <div class="phase-num">PHASE 02</div>
+      <div class="phase-title">Talk to the Robot — Commands & Sensor Data</div>
+      <div class="phase-meta">Weeks 3–5<br>~3 hrs/week</div>
+      <span class="phase-complete" id="complete-phase2">✓ Done</span>
+      <div class="phase-toggle">▼</div>
+    </div>
+    <div class="phase-body">
+      <div class="callout">
+        <strong>⚡ How to use Claude Code here</strong>
+        Whenever you hit a Python concept you don't understand, just ask: "explain what a class is using my robot code as the example." Claude Code teaches you concepts through your actual project — no detours into generic tutorials.
+      </div>
+
+      <div class="task" onclick="toggleTask(this)">
+        <div class="task-check"></div>
+        <div class="task-content">
+          <div class="task-title">Use Claude Code to write a script that reads & prints IMU data live</div>
+          <div class="task-desc">Say: "Write a Python script using unitree_sdk2_python that subscribes to the Go2's IMU topic and prints accelerometer and gyroscope values in real time." Run it while tilting the robot gently — watch the numbers change.</div>
+        </div>
+        <div class="task-tag tag-project">Project</div>
+      </div>
+
+      <div class="task" onclick="toggleTask(this)">
+        <div class="task-check"></div>
+        <div class="task-content">
+          <div class="task-title">Ask Claude Code to add logging to a CSV file</div>
+          <div class="task-desc">"Modify the IMU script to log all sensor readings to a timestamped CSV file." You just learned file I/O, timestamps, and data structures — by doing, not reading.</div>
+        </div>
+        <div class="task-tag tag-hands-on">Hands-on</div>
+      </div>
+
+      <div class="task" onclick="toggleTask(this)">
+        <div class="task-check"></div>
+        <div class="task-content">
+          <div class="task-title">Use Claude Code to write a velocity command script — make it sit and stand</div>
+          <div class="task-desc">"Write a Python script that sends a sit command, waits 2 seconds, then sends a stand command to the Go2." Your first programmatic robot control. Debug any errors with Claude Code in the same session.</div>
+        </div>
+        <div class="task-tag tag-project">Project</div>
+      </div>
+
+      <div class="task" onclick="toggleTask(this)">
+        <div class="task-check"></div>
+        <div class="task-content">
+          <div class="task-title">Set up ROS2 with Claude Code's help and bridge the SDK</div>
+          <div class="task-desc">"Help me install ROS2 Humble on Ubuntu and connect my existing Go2 Python scripts to it as a ROS2 node." Claude Code will generate the setup commands AND the wrapper code — you learn ROS2 concepts as it explains each piece.</div>
+        </div>
+        <div class="task-tag tag-hands-on">Hands-on</div>
+      </div>
+
+      <div class="task" onclick="toggleTask(this)">
+        <div class="task-check"></div>
+        <div class="task-content">
+          <div class="task-title">Ask Claude Code: "What Python concepts have I actually used so far?"</div>
+          <div class="task-desc">Prompt: "Look at all the code in this project and list the Python concepts I've used — functions, classes, loops, etc. — with a one-line explanation of where each appears." You'll be surprised how much you've learned without realizing it.</div>
+        </div>
+        <div class="task-tag tag-leverage">PM Leverage</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PHASE 3 -->
+  <div class="phase" id="phase3">
+    <div class="phase-header" onclick="togglePhase('phase3')">
+      <div class="phase-num">PHASE 03</div>
+      <div class="phase-title">Autonomous Behaviors — Your First Real Demo</div>
+      <div class="phase-meta">Weeks 6–10<br>~4 hrs/week</div>
+      <span class="phase-complete" id="complete-phase3">✓ Done</span>
+      <div class="phase-toggle">▼</div>
+    </div>
+    <div class="phase-body">
+      <div class="callout">
+        <strong>⚡ How to use Claude Code here</strong>
+        This is where Claude Code really earns its keep. Describe the behavior you want in product terms: "I want the robot to walk forward until it detects an obstacle, then stop." Claude Code translates your intent into working code — you focus on what, it handles how.
+      </div>
+
+      <div class="task" onclick="toggleTask(this)">
+        <div class="task-check"></div>
+        <div class="task-content">
+          <div class="task-title">Build a "walk a square" script with Claude Code</div>
+          <div class="task-desc">"Write a ROS2 Python node that publishes velocity commands to make the Go2 walk a 1-meter square, then stop." When it doesn't work perfectly, describe the wrong behavior and ask Claude Code to fix it. This debugging loop is the real learning.</div>
+        </div>
+        <div class="task-tag tag-project">Project</div>
+      </div>
+
+      <div class="task" onclick="toggleTask(this)">
+        <div class="task-check"></div>
+        <div class="task-content">
+          <div class="task-title">Add camera feed visualization with Claude Code</div>
+          <div class="task-desc">"Add a ROS2 node that subscribes to the Go2's camera topic and displays the live feed using OpenCV." Then: "Highlight any red objects it sees." You just learned computer vision — by building.</div>
+        </div>
+        <div class="task-tag tag-hands-on">Hands-on</div>
+      </div>
+
+      <div class="task" onclick="toggleTask(this)">
+        <div class="task-check"></div>
+        <div class="task-content">
+          <div class="task-title">Ask Claude Code to refactor your project and explain the structure</div>
+          <div class="task-desc">"Refactor all my scripts into a clean ROS2 package with proper launch files. Explain each design decision." You'll learn ROS2 architecture by seeing your own messy code become professional.</div>
+        </div>
+        <div class="task-tag tag-hands-on">Hands-on</div>
+      </div>
+
+      <div class="task" onclick="toggleTask(this)">
+        <div class="task-check"></div>
+        <div class="task-content">
+          <div class="task-title">Record and post your demo — robot doing something you fully coded</div>
+          <div class="task-desc">30–60 seconds of autonomous behavior. Ask Claude Code: "Help me write a LinkedIn post explaining what I built, what I learned, and what's next." Post it. This is your first public proof of work in robotics.</div>
+        </div>
+        <div class="task-tag tag-leverage">PM Leverage</div>
+      </div>
+
+      <div class="task" onclick="toggleTask(this)">
+        <div class="task-check"></div>
+        <div class="task-content">
+          <div class="task-title">Ask Claude Code to generate a README for your GitHub repo</div>
+          <div class="task-desc">"Write a README.md for this project that explains what it does, how to set it up, and what I learned." Push everything to GitHub. This is your first robotics portfolio piece.</div>
+        </div>
+        <div class="task-tag tag-project">Project</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PHASE 4 -->
+  <div class="phase" id="phase4">
+    <div class="phase-header" onclick="togglePhase('phase4')">
+      <div class="phase-num">PHASE 04</div>
+      <div class="phase-title">Advanced Projects — Sim, ML & Job-Ready</div>
+      <div class="phase-meta">Ongoing<br>self-directed</div>
+      <span class="phase-complete" id="complete-phase4">✓ Done</span>
+      <div class="phase-toggle">▼</div>
+    </div>
+    <div class="phase-body">
+      <div class="callout">
+        <strong>⚡ How to use Claude Code here</strong>
+        At this stage, use Claude Code as a senior engineer collaborator. Say things like: "Review my codebase and suggest architectural improvements," or "I want to add obstacle avoidance — what's the best approach for a Go2 and help me implement it."
+      </div>
+
+      <div class="task" onclick="toggleTask(this)">
+        <div class="task-check"></div>
+        <div class="task-content">
+          <div class="task-title">Set up Gazebo simulation with Claude Code's help</div>
+          <div class="task-desc">"Help me set up a Gazebo simulation with a Unitree Go2 URDF model and replicate my square-walk script in sim." This lets you develop new behaviors risk-free. Claude Code will find the right URDF and generate all setup commands.</div>
+        </div>
+        <div class="task-tag tag-hands-on">Hands-on</div>
+      </div>
+
+      <div class="task" onclick="toggleTask(this)">
+        <div class="task-check"></div>
+        <div class="task-content">
+          <div class="task-title">Build obstacle avoidance with Claude Code + the Go2's depth sensor</div>
+          <div class="task-desc">"Add obstacle avoidance to my walking script using the Go2's depth/lidar data. The robot should stop or reroute when something is within 0.5m." Claude Code will explain the sensor data format as it builds.</div>
+        </div>
+        <div class="task-tag tag-project">Project</div>
+      </div>
+
+      <div class="task" onclick="toggleTask(this)">
+        <div class="task-check"></div>
+        <div class="task-content">
+          <div class="task-title">Ask Claude Code to write a technical blog post from your codebase</div>
+          <div class="task-desc">"Read my entire project and write a technical blog post titled 'What I learned building autonomous behaviors on the Unitree Go2-W as a non-engineer.'" Publish on Medium or dev.to. Pure gold for job applications.</div>
+        </div>
+        <div class="task-tag tag-leverage">PM Leverage</div>
+      </div>
+
+      <div class="task" onclick="toggleTask(this)">
+        <div class="task-check"></div>
+        <div class="task-content">
+          <div class="task-title">Use Claude Code to build a "product concept" prototype</div>
+          <div class="task-desc">Pick a real use case — security patrol, inventory scanning, etc. Say: "Help me build a minimal prototype of the Go2 doing a repeatable patrol route with logging." Then write a 1-pager around it for interviews.</div>
+        </div>
+        <div class="task-tag tag-project">Project</div>
+      </div>
+
+      <div class="task" onclick="toggleTask(this)">
+        <div class="task-check"></div>
+        <div class="task-content">
+          <div class="task-title">Ask Claude Code to prep you for a robotics PM technical interview</div>
+          <div class="task-desc">"Based on everything in this codebase, generate 10 technical questions a robotics company might ask a PM candidate, with ideal answers referencing my actual work." Then practice answering them.</div>
+        </div>
+        <div class="task-tag tag-leverage">PM Leverage</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resources -->
+  <div class="resources">
+    <div class="resources-header"><span>◈</span> Key Resources</div>
+    <div class="resource-grid">
+      <div class="resource-item">
+        <div class="resource-name">unitreerobotics/unitree_ros2</div>
+        <div class="resource-desc">Official GitHub SDK for connecting Go2 to ROS2</div>
+        <div class="resource-type">→ github.com</div>
+      </div>
+      <div class="resource-item">
+        <div class="resource-name">ROS2 Humble Docs</div>
+        <div class="resource-desc">Official beginner tutorials — nodes, topics, services</div>
+        <div class="resource-type">→ docs.ros.org</div>
+      </div>
+      <div class="resource-item">
+        <div class="resource-name">Modern Robotics (Northwestern)</div>
+        <div class="resource-desc">Best free theory course — kinematics, motion planning</div>
+        <div class="resource-type">→ coursera.org</div>
+      </div>
+      <div class="resource-item">
+        <div class="resource-name">Automate the Boring Stuff</div>
+        <div class="resource-desc">Free Python fundamentals — practical and fast</div>
+        <div class="resource-type">→ automatetheboringstuff.com</div>
+      </div>
+      <div class="resource-item">
+        <div class="resource-name">Unitree Community Discord</div>
+        <div class="resource-desc">Active community, hardware tips, SDK help</div>
+        <div class="resource-type">→ discord</div>
+      </div>
+      <div class="resource-item">
+        <div class="resource-name">ROS Discourse</div>
+        <div class="resource-desc">Forum for ROS questions — very active</div>
+        <div class="resource-type">→ discourse.ros.org</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function toggleRef(btn) {
+    btn.classList.toggle('open');
+    btn.nextElementSibling.classList.toggle('open');
+  }
+
+  function togglePhase(id) {
+    const phase = document.getElementById(id);
+    phase.classList.toggle('open');
+  }
+
+  function toggleTask(el) {
+    const wasDone = el.classList.contains('done');
+    el.classList.toggle('done');
+    if (!wasDone) {
+      el.classList.add('just-done');
+      setTimeout(() => el.classList.remove('just-done'), 400);
+    }
+    updateProgress();
+    checkPhaseComplete();
+  }
+
+  function updateProgress() {
+    const all = document.querySelectorAll('.task');
+    const done = document.querySelectorAll('.task.done');
+    const pct = all.length ? (done.length / all.length) * 100 : 0;
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressCount').textContent = `${done.length} / ${all.length} done`;
+  }
+
+  function checkPhaseComplete() {
+    ['phase1','phase2','phase3','phase4'].forEach(id => {
+      const phase = document.getElementById(id);
+      const tasks = phase.querySelectorAll('.task');
+      const done = phase.querySelectorAll('.task.done');
+      const badge = document.getElementById('complete-' + id);
+      if (tasks.length > 0 && done.length === tasks.length) {
+        badge.style.display = 'inline-block';
+        phase.style.borderColor = 'rgba(0, 200, 122, 0.4)';
+      } else {
+        badge.style.display = 'none';
+        phase.style.borderColor = '';
+      }
+    });
+  }
+
+  // Init
+  updateProgress();
+</script>
+</body>
+</html>
