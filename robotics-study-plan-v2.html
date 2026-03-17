@@ -21,6 +21,26 @@
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
+<script>
+  function saveProgress() {
+    const all = document.querySelectorAll('.task');
+    const state = Array.from(all).map(t => t.classList.contains('done'));
+    localStorage.setItem('go2-study-plan-progress', JSON.stringify(state));
+  }
+
+  function loadProgress() {
+    const saved = localStorage.getItem('go2-study-plan-progress');
+    if (!saved) return;
+    const state = JSON.parse(saved);
+    const all = document.querySelectorAll('.task');
+    all.forEach((task, i) => {
+      if (state[i]) task.classList.add('done');
+    });
+  }
+
+  loadProgress();
+</script>
+  
   body {
     background: var(--bg);
     color: var(--text);
@@ -952,6 +972,7 @@
       el.classList.add('just-done');
       setTimeout(() => el.classList.remove('just-done'), 400);
     }
+    saveProgress();
     updateProgress();
     checkPhaseComplete();
   }
